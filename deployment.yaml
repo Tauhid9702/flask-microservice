@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-microservice
+  template:
+    metadata:
+      labels:
+        app: flask-microservice
+    spec:
+      containers:
+      - name: flask-container
+        image: flask-microservice:latest
+        imagePullPolicy: Never  # 👈 This line is crucial
+        ports:
+        - containerPort: 5000
+
