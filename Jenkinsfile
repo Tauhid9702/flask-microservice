@@ -1,29 +1,34 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
-        IMAGE_NAME = "tauhid1/flask-microservice"
-    }
-
     stages {
-        stage('Checkout') {
+        stage('Clone') {
             steps {
-                git 'https://github.com/Tauhid9702/flask-microservice.git'
+                echo 'Cloning Repository...'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:latest")
-                }
+                sh 'docker build -t tauhid1/flask-microservice:latest .'
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
-                        docker.image("${IMAGE_NAME}:latest").push()
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+                    sh 'docker push tauhid1/flask-microservice:latest'
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f service.yaml'
+            }
+        }
+    }
+}
 
